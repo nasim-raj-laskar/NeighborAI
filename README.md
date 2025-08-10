@@ -2,7 +2,9 @@
 
 
 ![Under Development](https://img.shields.io/badge/Under%20Development-black?style=for-the-badge&logo=github&logoColor=white)
-[![Prototype](https://img.shields.io/badge/Prototype-black?style=for-the-badge&logo=react&logoColor=61DAFB)](https://vercel.com/nasimrajlaskar18-8408s-projects/v0-neighbor-ai-design)
+[![Prototype](https://img.shields.io/badge/Prototype-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org)
+
+
 
 
 
