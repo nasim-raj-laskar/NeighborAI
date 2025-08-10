@@ -1,0 +1,490 @@
+\`\`\`typescript
+// components/sliding-sidebar.tsx
+import Image from "next/image"
+import { X, Pencil } from 'lucide-react'
+import { useEffect, useState } from "react"
+
+type AttendingEvent = { id: string; title: string; date: string; category: string }
+type Friend = { id: string; name: string; avatar: string; tags: string[] }
+
+const mockFriends: Friend[] = [
+  { id: "f1", name: "Ava", avatar: "/woman-profile-avatar.png", tags: ["🎵 Music", "🎨 Arts"] },
+  { id: "f2", name: "Liam", avatar: "/profile-avatar-man.png", tags: ["🏃 Fitness", "🍕 Food"] },
+  { id: "f3", name: "Sofia", avatar: "/woman-smiling-avatar.png", tags: ["💻 Tech", "🎪 Festivals"] },
+  { id: "f4", name: "Noah", avatar: "/profile-avatar-man-beard.png", tags: ["🌿 Outdoors", "📚 Books"] },
+]
+
+export function SlidingSidebar({
+  open = false,
+  onClose = () => {},
+}: {
+  open?: boolean
+  onClose?: () => void
+} = {}) {
+  const [attending, setAttending] = useState<AttendingEvent[]>([])
+  const [previous, setPrevious] = useState<AttendingEvent[]>([])
+  const [profile, setProfile] = useState({ name: "You", avatar: "/diverse-profile-avatars.png" })
+
+  useEffect(() => {
+    const a = JSON.parse(localStorage.getItem("neighborai_attending") || "[]")
+    if (Array.isArray(a)) setAttending(a)
+    const p = JSON.parse(localStorage.getItem("neighborai_attended_past") || "[]")
+    if (Array.isArray(p)) setPrevious(p)
+    const pf = JSON.parse(localStorage.getItem("neighborai_profile") || "{}")
+    if (pf && (pf.name || pf.avatar)) setProfile((prev) => ({ ...prev, ...pf }))
+  }, [open])
+
+  const categoryColor = (cat: string) => {
+    if (/music/i.test(cat)) return "#FB7185"
+    if (/food|dining/i.test(cat)) return "#58A4B0"
+    if (/art|culture/i.test(cat)) return "#B4AEE8"
+    if (/fitness|yoga|sport/i.test(cat)) return "#10B981"
+    return "#888"
+  }
+
+  const onQuickEdit = () => {
+    const name = prompt("Update your display name", profile.name) || profile.name
+    const avatar = prompt("Paste an avatar image URL", profile.avatar) || profile.avatar
+    const next = { name, avatar }
+    setProfile(next)
+    localStorage.setItem("neighborai_profile", JSON.stringify(next))
+  }
+
+  return (
+    <>
+      <div
+        className={`fixed inset-0 z-40 transition-opacity ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+        style={{ background: "rgba(0,0,0,0.25)" }}
+        onClick={onClose}
+        aria-hidden
+      />
+      <aside
+        className={`fixed top-0 right-0 h-full w-[90%] sm:w-[420px] z-50 transition-transform duration-300 ease-out ${
+          open ? "translate-x-0" : "translate-x-full"
+        }`}
+        role="dialog"
+        aria-label="Sidebar"
+      >
+        <div className="relative h-full bg-white/85 backdrop-blur-xl border-l border-white/50 shadow-[-10px_0_30px_rgba(0,0,0,0.08)]">
+          {/* soft left gradient edge */}
+          <div className="pointer-events-none absolute left-0 top-0 h-full w-2 bg-gradient-to-l from-transparent to-black/5" aria-hidden="true" />
+          <button
+            aria-label="Close sidebar"
+            onClick={onClose}
+            className="absolute right-3 top-3 z-10 rounded-full p-2 hover:bg-white shadow-sm"
+          >
+            <X />
+          </button>
+          <div className="h-full overflow-y-auto p-4 sm:p-5">
+            {/* Profile Summary */}
+            <section className="mt-6">
+              <div className="flex items-center gap-3">
+                <Image src={profile.avatar || "/placeholder.svg"} alt="Profile" width={56} height={56} className="rounded-full border" />
+                <div>
+                  <h3 className="font-semibold text-[#333333]">{profile.name}</h3>
+                  <button onClick={onQuickEdit} className="mt-1 inline-flex items-center gap-1 text-xs text-[#10B981] hover:underline">
+                    <Pencil size={14} />
+                    Quick edit
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* Events You’re Attending */}
+            <section className="mt-6">
+              <h4 className="font-semibold text-[#333333]">Events You’re Attending</h4>
+              <ul className="mt-2 space-y-2">
+                {attending.length === 0 && <li className="text-xs text-gray-500">No events yet. Explore the map to join events.</li>}
+                {attending.map((e) => (
+                  <li
+                    key={e.id}
+                    className="flex items-center justify-between rounded-xl border bg-white p-2 hover:shadow-md hover:-translate-y-0.5 hover:bg-[#FEFCF9] transition-all"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-[#333333]">{e.title}</p>
+                      <p className="text-xs text-gray-500">{e.date}</p>
+                    </div>
+                    <span
+                      className="text-[10px] px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: `${categoryColor(e.category)}22`, color: categoryColor(e.category) }}
+                    >
+                      {e.category}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            {/* Previous Events Attended */}
+            <section className="mt-6">
+              <h4 className="font-semibold text-[#333333]">Previous Events Attended</h4>
+              <ul className="mt-2 space-y-2">
+                {previous.length === 0 && <li className="text-xs text-gray-500">No previous events yet.</li>}
+                {previous.map((e) => (
+                  <li key={e.id} className="rounded-xl border bg-white p-2 hover:shadow-md hover:-translate-y-0.5 hover:bg-[#F8F9FA] transition-all">
+                    <a href="#" className="block">
+                      <p className="text-sm font-medium text-[#333333]">{e.title}</p>
+                      <p className="text-xs text-gray-500">{e.date}</p>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            {/* Find Friends with Similar Interests */}
+            <section className="mt-6">
+              <h4 className="font-semibold text-[#333333]">Find Friends with Similar Interests</h4>
+              <div className="mt-2 flex gap-3 overflow-x-auto pb-1">
+                {mockFriends.map((f) => (
+                  <div key={f.id} className="min-w-[160px] bg-white border rounded-xl p-3 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
+                    <div className="flex items-center gap-2">
+                      <Image src={f.avatar || "/placeholder.svg"} alt={f.name} width={36} height={36} className="rounded-full" />
+                      <div className="text-sm font-medium text-[#333333]">{f.name}</div>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {f.tags.map((t) => (
+                        <span key={t} className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: "#E6FFFB", color: "#58A4B0" }}>
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        </div>
+      </aside>
+    </>
+  )
+}
+
+// components/top-nav.tsx
+"use client"
+
+import { Bell, MapPin, PanelRightOpen } from 'lucide-react'
+import Image from "next/image"
+import { WeatherWidget } from "./weather-widget"
+import { useEffect, useState } from "react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
+export function TopNav(
+  { currentLocation = "Brooklyn, NY", onOpenSidebar = () => {} }: { currentLocation?: string; onOpenSidebar?: () => void } = {
+    currentLocation: "Brooklyn, NY",
+    onOpenSidebar: () => {},
+  },
+) {
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [count, setCount] = useState<number>(() => {
+    const n = Number(localStorage.getItem("neighborai_notif_count") || "3")
+    return Number.isNaN(n) ? 3 : n
+  })
+  useEffect(() => {
+    localStorage.setItem("neighborai_notif_count", String(count))
+  }, [count])
+
+  const notifications = [
+    { id: "n1", text: "New event near you: Sunset Jazz" },
+    { id: "n2", text: "Ava joined 'Book Club'" },
+    { id: "n3", text: "Tech Meetup starts in 2 hours" },
+  ]
+
+  return (
+    <div className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b">
+      <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            aria-label="Open sidebar"
+            onClick={onOpenSidebar}
+            className="p-2 rounded-full hover:bg-[#F3F4F6] transition-colors"
+            title="Open panel"
+          >
+            <PanelRightOpen className="text-[#10B981]" />
+          </button>
+          <span className="text-[#10B981] font-extrabold">🏠 NeighborAI</span>
+        </div>
+
+        <div className="hidden sm:flex items-center gap-1 text-sm text-[#333333]">
+          <MapPin size={16} className="text-[#10B981]" />
+          <span className="truncate max-w-[220px] text-center">{currentLocation}</span>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <WeatherWidget locationString={currentLocation} />
+          <DropdownMenu open={notifOpen} onOpenChange={(o) => { setNotifOpen(o); if (o) setCount(0) }}>
+            <DropdownMenuTrigger asChild>
+              <button className="relative rounded-full p-1.5 hover:bg-[#F3F4F6] transition-colors" aria-label="Notifications">
+                <Bell className="text-[#333333]" />
+                {count > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#FB7185] text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                    {count}
+                  </span>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72">
+              <div className="px-2 py-1.5 text-xs text-gray-500">Notifications</div>
+              <DropdownMenuSeparator />
+              {notifications.map((n) => (
+                <DropdownMenuItem key={n.id} className="text-sm">
+                  {n.text}
+                </DropdownMenuItem>
+              ))}
+              {notifications.length === 0 && <div className="p-2 text-sm text-gray-500">No notifications</div>}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Image
+            src={"/placeholder.svg?height=32&width=32&query=profile%20avatar"}
+            alt="Profile"
+            width={32}
+            height={32}
+            className="rounded-full border"
+          />
+        </div>
+      </div>
+    )
+  }
+
+// app/dashboard/page.tsx
+"use client"
+
+import { useEffect, useState } from "react"
+import { TopNav } from "@/components/top-nav"
+import { InteractiveMap } from "@/components/interactive-map"
+import { AIRecommendations } from "@/components/ai-recommendations"
+import { BottomTabs } from "@/components/bottom-tabs"
+import { SlidingSidebar } from "@/components/sliding-sidebar"
+
+export default function DashboardPage() {
+  const [location, setLocation] = useState("Brooklyn, NY")
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  useEffect(() => {
+    const loc = localStorage.getItem("neighborai_location")
+    if (loc) setLocation(loc)
+  }, [])
+
+  return (
+    <div className="min-h-[100dvh] bg-[#F8F9FA]">
+      <TopNav currentLocation={location} onOpenSidebar={() => setSidebarOpen(true)} />
+      <SlidingSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <main className={`container mx-auto px-2 sm:px-4 py-4 space-y-4 transition-[margin] duration-300 ${sidebarOpen ? "lg:mr-[420px]" : ""}`}>
+        <section aria-label="Map" className="w-full">
+          <InteractiveMap />
+        </section>
+        <section aria-label="Events" className="w-full">
+          <AIRecommendations />
+        </section>
+      </main>
+      <BottomTabs />
+    </div>
+  )
+}
+
+// components/interactive-map.tsx
+// Assuming the original interactive-map.tsx exists and has a structure like this:
+// import React from 'react';
+
+// export function InteractiveMap() {
+//   return (
+//     <section className="bg-white rounded-2xl p-2 sm:p-3 shadow-sm relative overflow-hidden">
+//       <div className="h-[400px] w-full rounded-xl overflow-hidden">
+//         {/* Map content here */}
+//         <div>Map Content</div>
+//       </div>
+//     </section>
+//   );
+// }
+
+// The update is to change the outer container's styles and the inner div's height.
+// Here's the updated component:
+
+import React from 'react';
+
+export function InteractiveMap() {
+  return (
+    <section className="bg-white rounded-2xl p-2 sm:p-3 shadow-sm relative overflow-hidden">
+      <div className="h-[65vh] w-full rounded-xl overflow-hidden">
+        {/* Map content here */}
+        <div>Map Content</div>
+      </div>
+    </section>
+  );
+}
+
+// components/ai-recommendations.tsx
+"use client"
+
+import Image from "next/image"
+import { useEffect, useState } from "react"
+
+const recs = [
+  { title: "Sunset Jazz at Riverside", match: 96, distance: "0.7 mi", time: "Fri 7:00 PM" },
+  { title: "Art Walk: Local Creators", match: 91, distance: "1.1 mi", time: "Sat 2:00 PM" },
+  { title: "Neighborhood Yoga in the Park", match: 89, distance: "0.5 mi", time: "Sun 9:00 AM" },
+  { title: "Tech Meetup: Web & AI", match: 94, distance: "1.8 mi", time: "Thu 6:30 PM" },
+]
+
+export function AIRecommendations({}: Record<string, never> = {}) {
+  const [joined, setJoined] = useState<string[]>([])
+  const [loaded, setLoaded] = useState(false)
+  const onJoin = (title: string) => setJoined((p) => (p.includes(title) ? p : [...p, title]))
+
+  useEffect(() => {
+    const id = setTimeout(() => setLoaded(true), 100) // small delay for animation
+    return () => clearTimeout(id)
+  }, [])
+
+  return (
+    <section className="bg-white rounded-2xl p-4 shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-bold text-[#333333]">AI Recommendations</h3>
+        <p className="text-xs text-gray-500">Based on your interests</p>
+      </div>
+      <div className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-3 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"} transition-all duration-500`}>
+        {recs.map((r, i) => (
+          <div
+            key={i}
+            className="group bg-white border rounded-xl shadow-sm hover:shadow-lg transition-all hover:-translate-y-0.5 [transform-style:preserve-3d] hover:[transform:rotateX(1.5deg)]"
+          >
+            <div className="overflow-hidden rounded-t-xl">
+              <Image
+                src={`/abstract-geometric-shapes.png?height=160&width=280&query=${encodeURIComponent(r.title)}`}
+                alt={r.title}
+                width={280}
+                height={160}
+                className="w-full h-[160px] object-cover rounded-t-xl transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+            <div className="p-3">
+              <div className="flex items-start justify-between gap-2">
+                <h4 className="font-semibold text-sm text-[#333333]">{r.title}</h4>
+                <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: "#FDECEF", color: "#D95A6A" }}>
+                  {`${r.match}%`}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
+                <span>{r.distance}</span>
+                <span>{r.time}</span>
+              </div>
+              <button
+                onClick={() => onJoin(r.title)}
+                className={`mt-3 w-full text-sm rounded-full py-2 transition-all hover:shadow hover:scale-[1.02] ${
+                  joined.includes(r.title) ? "bg-[#10B981] text-white" : "bg-gradient-to-r from-[#10B981] to-[#FB7185] text-white"
+                }`}
+              >
+                {joined.includes(r.title) ? "Joined" : "Join"}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// components/weather-widget.tsx
+"use client"
+
+import { Cloud } from 'lucide-react'
+import { useEffect, useState } from "react"
+
+type Weather = { temp: number; code: number; description: string }
+type Coords = { lat: number; lon: number }
+
+const codeToText = (code: number) => {
+  if (code === 0) return "Clear sky"
+  if (code === 1 || code === 2 || code === 3) return "Partly cloudy"
+  if (code === 45 || code === 48) return "Fog"
+  if (code === 51 || code === 53 || code === 55) return "Drizzle"
+  if (code === 56 || code === 57) return "Freezing Drizzle"
+  if (code === 61 || code === 63 || code === 65) return "Rain"
+  if (code === 66 || code === 67) return "Freezing Rain"
+  if (code === 71 || code === 73 || code === 75) return "Snow fall"
+  if (code === 77) return "Snow grains"
+  if (code === 80 || code === 81 || code === 82) return "Rain showers"
+  if (code === 85 || code === 86) return "Snow showers"
+  if (code === 95) return "Thunderstorm"
+  if (code === 96 || code === 99) return "Thunderstorm with slight and heavy hail"
+  return "Unknown"
+}
+
+const parseStoredLocation = (stored: string | null | undefined) => {
+  if (!stored) return null
+  try {
+    const parsed = JSON.parse(stored)
+    if (parsed && parsed.lat && parsed.lon) return parsed as Coords
+  } catch {}
+  return null
+}
+
+export function WeatherWidget({ locationString }: { locationString?: string } = {}) {
+  const [weather, setWeather] = useState<Weather | null>(null)
+  const [coords, setCoords] = useState<Coords | null>(null)
+
+  useEffect(() => {
+    let active = true
+    async function resolveCoords() {
+      const stored = locationString || localStorage.getItem("neighborai_location")
+      const parsed = parseStoredLocation(stored)
+      if (parsed) return { lat: parsed.lat, lon: parsed.lon }
+
+      if (stored) {
+        try {
+          const q = encodeURIComponent(stored)
+          const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${q}&count=1`)
+          const d = await r.json()
+          const r0 = d?.results?.[0]
+          if (r0) return { lat: r0.latitude, lon: r0.longitude }
+        } catch {}
+      }
+
+      return await new Promise<Coords | null>((resolve) => {
+        if (!navigator.geolocation) return resolve(null)
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+          () => resolve(null),
+          { enableHighAccuracy: true, timeout: 8000 },
+        )
+      })
+    }
+
+    async function loadWeather() {
+      const c = await resolveCoords()
+      if (!active) return
+      if (!c) {
+        setWeather({ temp: 0, code: 2, description: "Partly cloudy" })
+        return
+      }
+      setCoords(c)
+      try {
+        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current_weather=true`)
+        const d = await r.json()
+        const cw = d?.current_weather
+        if (cw && active) setWeather({ temp: cw.temperature, code: cw.weathercode, description: codeToText(cw.weathercode) })
+      } catch {
+        if (active) setWeather({ temp: 0, code: 2, description: "Partly cloudy" })
+      }
+    }
+
+    loadWeather()
+    return () => { active = false }
+  }, [locationString])
+
+  if (!weather) {
+    return (
+      <div className="flex items-center gap-1 text-sm text-[#333333]">
+        <Cloud className="text-[#94A3B8]" size={16} />
+        <span className="text-xs text-gray-500">—</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-1 text-sm text-[#333333]">
+      <Cloud className="text-[#94A3B8]" size={16} />
+      <span>{weather.temp}°</span>
+    </div>
+  )
+}
+\`\`\`
