@@ -1,9 +1,10 @@
 # NeighborAI 
 
 
+![Under Development](https://img.shields.io/badge/Under%20Development-black?style=for-the-badge&logo=github&logoColor=white)
+[![Prototype](https://img.shields.io/badge/Prototype-black?style=for-the-badge&logo=react&logoColor=61DAFB)](https://vercel.com/nasimrajlaskar18-8408s-projects/v0-neighbor-ai-design)
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-white?style=for-the-badge&logo=vercel&logoColor=black)](https://vercel.com/nasimrajlaskar18-8408s-projects/v0-neighbor-ai-design)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-blue?style=for-the-badge&logo=vercel)](https://v0.dev/chat/projects/e2Mo53ysAzW)
+
 
 
 ## Overview
