@@ -30,6 +30,8 @@ export default function Page() {
                 className="absolute inset-0 h-full w-full"
                 style={{ pointerEvents: "none" }}
                 title="NeighborAI Hero 3D Background"
+                loading="lazy"
+                onError={() => console.log("Spline iframe failed to load")}
               />
             </div>
 

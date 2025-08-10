@@ -1,12 +1,8 @@
 "use client"
-import dynamic from "next/dynamic";
-
-// Load InteractiveMap only on the client
-const InteractiveMap = dynamic(() => import("@/components/interactive-map"), { ssr: false });
 
 import { useEffect, useMemo, useState } from "react"
 import { TopNav } from "@/components/top-nav"
-// import { InteractiveMap } from "@/components/interactive-map"
+import { InteractiveMap } from "@/components/interactive-map"
 import { AIRecommendations } from "@/components/ai-recommendations"
 import { BottomTabs } from "@/components/bottom-tabs"
 import { SlidingSidebar } from "@/components/sliding-sidebar"

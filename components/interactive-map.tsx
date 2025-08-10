@@ -1,9 +1,17 @@
 "use client"
 
-import "leaflet/dist/leaflet.css"
-import { MapContainer, TileLayer, CircleMarker, Tooltip, Popup, useMap } from "react-leaflet"
 import { useEffect, useState } from "react"
 import Image from "next/image"
+import dynamic from "next/dynamic"
+
+// Dynamically import Leaflet components to avoid SSR issues
+const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false })
+const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false })
+const CircleMarker = dynamic(() => import("react-leaflet").then((mod) => mod.CircleMarker), { ssr: false })
+const Tooltip = dynamic(() => import("react-leaflet").then((mod) => mod.Tooltip), { ssr: false })
+const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false })
+
+import { useMap } from "react-leaflet"
 
 type Coords = { lat: number; lon: number }
 type EventItem = {
@@ -106,10 +114,14 @@ function MapSizeInvalidator({ sizeSignal }: { sizeSignal: number | boolean }) {
 }
 
 export function InteractiveMap({ sizeSignal = 0 }: { sizeSignal?: number | boolean } = {}) {
+  const [transportFor, setTransportFor] = useState<EventItem | null>(null)
   const center = useResolvedCenter()
   const [events, setEvents] = useState<EventItem[]>([])
   const [attendingIds, setAttendingIds] = useState<string[]>([])
-  const [transportFor, setTransportFor] = useState<EventItem | null>(null)
+
+  useEffect(() => {
+    import("leaflet/dist/leaflet.css")
+  }, [])
 
   useEffect(() => {
     setEvents(generateMockEvents(center))
