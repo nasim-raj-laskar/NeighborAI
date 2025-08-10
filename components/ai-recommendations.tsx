@@ -13,12 +13,33 @@ const recs = [
 export function AIRecommendations({}: Record<string, never> = {}) {
   const [joined, setJoined] = useState<string[]>([])
   const [loaded, setLoaded] = useState(false)
-  const onJoin = (title: string) => setJoined((p) => (p.includes(title) ? p : [...p, title]))
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const id = setTimeout(() => setLoaded(true), 100)
     return () => clearTimeout(id)
   }, [])
+
+  const onJoin = (title: string) => {
+    if (!mounted) return
+    setJoined((p) => (p.includes(title) ? p : [...p, title]))
+  }
+
+  if (!mounted) {
+    return (
+      <section className="bg-white rounded-2xl p-4 shadow-sm">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-1/4 mb-3"></div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-gray-100 rounded-xl h-64"></div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="bg-white rounded-2xl p-4 shadow-sm">

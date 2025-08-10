@@ -41,20 +41,36 @@ export function TopNav(
   },
 ) {
   const [notifOpen, setNotifOpen] = useState(false)
-  const [count, setCount] = useState<number>(() => {
-    const n = Number(localStorage.getItem("neighborai_notif_count") || "3")
-    return Number.isNaN(n) ? 3 : n
-  })
-  useEffect(() => {
-    localStorage.setItem("neighborai_notif_count", String(count))
-  }, [count])
-
+  const [count, setCount] = useState<number>(3)
   const [weather, setWeather] = useState<Weather | null>(null)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted || typeof window === "undefined") return
+
+    const n = Number(localStorage.getItem("neighborai_notif_count") || "3")
+    setCount(Number.isNaN(n) ? 3 : n)
+  }, [mounted])
+
+  useEffect(() => {
+    if (!mounted || typeof window === "undefined") return
+
+    localStorage.setItem("neighborai_notif_count", String(count))
+  }, [count, mounted])
+
+  useEffect(() => {
+    if (!mounted) return
+
     let active = true
     async function resolveCoords() {
-      const stored = currentLocation || localStorage.getItem("neighborai_location") || "Brooklyn, NY"
+      const stored =
+        currentLocation ||
+        (typeof window !== "undefined" ? localStorage.getItem("neighborai_location") : null) ||
+        "Brooklyn, NY"
       const m = /Lat\s*(-?\d+(\.\d+)?),\s*Lng\s*(-?\d+(\.\d+)?)/i.exec(stored)
       if (m) return { lat: Number.parseFloat(m[1]), lon: Number.parseFloat(m[3]) }
       try {
@@ -84,7 +100,7 @@ export function TopNav(
     return () => {
       active = false
     }
-  }, [currentLocation])
+  }, [currentLocation, mounted])
 
   const icon = useMemo(() => {
     if (!weather) return <Cloud className="text-[#94A3B8]" size={16} />
@@ -102,6 +118,29 @@ export function TopNav(
     { id: "n2", text: "Ava joined 'Book Club'" },
     { id: "n3", text: "Tech Meetup starts in 2 hours" },
   ]
+
+  if (!mounted) {
+    return (
+      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b">
+        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-[#10B981] font-extrabold">🏠 NeighborAI</span>
+          </div>
+          <div className="hidden sm:flex items-center gap-1 text-sm text-[#333333]">
+            <MapPin size={16} className="text-[#10B981]" />
+            <span className="truncate max-w-[220px] text-center">{currentLocation}</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="inline-flex items-center gap-1 text-sm text-[#333333]">
+              <Cloud className="text-[#94A3B8]" size={16} />
+              <span>—</span>
+            </div>
+            <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b">

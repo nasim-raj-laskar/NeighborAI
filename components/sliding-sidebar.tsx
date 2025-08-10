@@ -24,15 +24,22 @@ export function SlidingSidebar({
   const [attending, setAttending] = useState<AttendingEvent[]>([])
   const [previous, setPrevious] = useState<AttendingEvent[]>([])
   const [profile, setProfile] = useState({ name: "You", avatar: "/diverse-profile-avatars.png" })
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted || typeof window === "undefined") return
+
     const a = JSON.parse(localStorage.getItem("neighborai_attending") || "[]")
     if (Array.isArray(a)) setAttending(a)
     const p = JSON.parse(localStorage.getItem("neighborai_attended_past") || "[]")
     if (Array.isArray(p)) setPrevious(p)
     const pf = JSON.parse(localStorage.getItem("neighborai_profile") || "{}")
     if (pf && (pf.name || pf.avatar)) setProfile((prev) => ({ ...prev, ...pf }))
-  }, [open])
+  }, [open, mounted])
 
   const categoryColor = (cat: string) => {
     if (/music/i.test(cat)) return "#FB7185"
@@ -43,12 +50,16 @@ export function SlidingSidebar({
   }
 
   const onQuickEdit = () => {
+    if (typeof window === "undefined") return
+
     const name = prompt("Update your display name", profile.name) || profile.name
     const avatar = prompt("Paste an avatar image URL", profile.avatar) || profile.avatar
     const next = { name, avatar }
     setProfile(next)
     localStorage.setItem("neighborai_profile", JSON.stringify(next))
   }
+
+  if (!mounted) return null
 
   return (
     <>
@@ -105,9 +116,9 @@ export function SlidingSidebar({
               </div>
             </section>
 
-            {/* Events You’re Attending */}
+            {/* Events You're Attending */}
             <section className="mt-6">
-              <h4 className="font-semibold text-[#333333]">Events You’re Attending</h4>
+              <h4 className="font-semibold text-[#333333]">Events You're Attending</h4>
               <ul className="mt-2 space-y-2">
                 {attending.length === 0 && (
                   <li className="text-xs text-gray-500">No events yet. Explore the map to join events.</li>
